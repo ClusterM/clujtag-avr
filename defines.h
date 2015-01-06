@@ -1,12 +1,8 @@
-#define PORT PORTB
-#define PORT_DDR DDRB
-#define PORT_PIN PINB
+#define JTAG_PORT B
+#define TMS_PIN 0
+#define TCK_PIN 1
+#define TDO_PIN 2
+#define TDI_PIN 3
 
-#define PIN_TMS 0
-#define PIN_TCK 1
-#define PIN_TDO 2
-#define PIN_TDI 3
-
-#define LED_PORT PORTD
-#define LED_PORT_DDR DDRD
-#define PIN_LED 6
+#define LED_PORT D
+#define LED_PIN 6

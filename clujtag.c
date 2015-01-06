@@ -1,4 +1,5 @@
 #include "USBtoSerial.h"
+#include "clujtag.h"
 #include "defines.h"
 #include "jtag_commands.h"
 
@@ -52,25 +53,25 @@ uint8_t get_usb_byte(void)
 
 void jtag_shutdown(void)
 {
-	PORT &= ~((1<<PIN_TMS) | (1<<PIN_TCK) | (1<<PIN_TDO) | (1<<PIN_TDI));
-	PORT_DDR &= ~((1<<PIN_TMS) | (1<<PIN_TCK) | (1<<PIN_TDO) | (1<<PIN_TDI));
+	PORT &= ~((1<<TMS_PIN) | (1<<TCK_PIN) | (1<<TDO_PIN) | (1<<TDI_PIN));
+	PORT_DDR &= ~((1<<TMS_PIN) | (1<<TCK_PIN) | (1<<TDO_PIN) | (1<<TDI_PIN));
 }
 
 void jtag_setup(void)
 {
-	PORT &= ~((1<<PIN_TMS) | (1<<PIN_TCK) | (1<<PIN_TDO) | (1<<PIN_TDI));
-	PORT_DDR |= (1<<PIN_TMS) | (1<<PIN_TCK) | (1<<PIN_TDI);
-	PORT_DDR &= ~(1<<PIN_TDO);
+	PORT &= ~((1<<TMS_PIN) | (1<<TCK_PIN) | (1<<TDO_PIN) | (1<<TDI_PIN));
+	PORT_DDR |= (1<<TMS_PIN) | (1<<TCK_PIN) | (1<<TDI_PIN);
+	PORT_DDR &= ~(1<<TDO_PIN);
 }
 
 int main(void)
 {
 	int initialized = 0;
 	jtag_shutdown();
-#ifdef PIN_LED
-#ifdef LED_PORT_DDR
-	LED_PORT_DDR |= 1<<PIN_LED;
-	LED_PORT &= ~(1<<PIN_LED);
+#ifdef LED_PIN
+#ifdef PORT_LED_DDR
+	PORT_LED_DDR |= 1<<LED_PIN;
+	PORT_LED &= ~(1<<LED_PIN);
 #endif
 #endif
 
@@ -82,10 +83,10 @@ int main(void)
 	{
 		uint8_t command = get_usb_byte();
 		uint8_t data, data2, ok, v, n;		
-#ifdef PIN_LED
-#ifdef LED_PORT
+#ifdef LED_PIN
+#ifdef PORT_LED
 		if (initialized)
-			LED_PORT ^= 1<<PIN_LED;
+			PORT_LED ^= 1<<LED_PIN;
 #endif
 #endif
 	
@@ -94,9 +95,9 @@ int main(void)
 			case JTAG_SETUP:
 				jtag_setup();
 				initialized = 1;
-#ifdef PIN_LED
-#ifdef LED_PORT
-				LED_PORT |= 1<<PIN_LED;
+#ifdef LED_PIN
+#ifdef PORT_LED
+				PORT_LED |= 1<<LED_PIN;
 #endif
 #endif
 				break;
@@ -104,9 +105,9 @@ int main(void)
 			case JTAG_SHUTDOWN:
 				jtag_shutdown();
 				initialized = 0;
-#ifdef PIN_LED
-#ifdef LED_PORT
-				LED_PORT &= ~(1<<PIN_LED);
+#ifdef LED_PIN
+#ifdef PORT_LED
+				PORT_LED &= ~(1<<LED_PIN);
 #endif
 #endif
 				break;
@@ -116,31 +117,31 @@ int main(void)
 				data = get_usb_byte();
 				if (data == 0xff) continue;
 				if (data) 
-					PORT |= (1<<PIN_TMS);
+					PORT |= (1<<TMS_PIN);
 				else
-					PORT &= ~(1<<PIN_TMS);
+					PORT &= ~(1<<TMS_PIN);
 				break;
 
 			case JTAG_SET_TCK:
 				data = get_usb_byte();
 				if (data == 0xff) continue;
 				if (data) 
-					PORT |= (1<<PIN_TCK);
+					PORT |= (1<<TCK_PIN);
 				else
-					PORT &= ~(1<<PIN_TCK);
+					PORT &= ~(1<<TCK_PIN);
 				break;
 					
 			case JTAG_SET_TDI:
 				data = get_usb_byte();
 				if (data == 0xff) continue;
 				if (data)
-					PORT |= (1<<PIN_TDI);
+					PORT |= (1<<TDI_PIN);
 				else
-					PORT &= ~(1<<PIN_TDI);
+					PORT &= ~(1<<TDI_PIN);
 				break;
 					
 			case JTAG_GET_TDO:
-				CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (PORT_PIN >> PIN_TDO) & 1);	
+				CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (PORT_PIN >> TDO_PIN) & 1);	
 				break;
 			*/
 					
@@ -148,23 +149,23 @@ int main(void)
 				data = get_usb_byte();
 				if (data == 0xff) continue;
 				if (data&1) 
-					PORT |= (1<<PIN_TMS);
+					PORT |= (1<<TMS_PIN);
 				else
-					PORT &= ~(1<<PIN_TMS);
+					PORT &= ~(1<<TMS_PIN);
 				if (data&(1<<1))
-					PORT |= (1<<PIN_TDI);
+					PORT |= (1<<TDI_PIN);
 				else
-					PORT &= ~(1<<PIN_TDI);
-				PORT &= ~(1<<PIN_TCK);
+					PORT &= ~(1<<TDI_PIN);
+				PORT &= ~(1<<TCK_PIN);
 				_delay_us(1);
-				PORT |= 1<<PIN_TCK;
-				CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (PORT_PIN >> PIN_TDO) & 1);
+				PORT |= 1<<TCK_PIN;
+				CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (PORT_PIN >> TDO_PIN) & 1);
 				break;
 					
 			case JTAG_PULSE_SCK:
-				PORT &= ~(1<<PIN_TCK);
+				PORT &= ~(1<<TCK_PIN);
 				_delay_us(1);
-				PORT |= 1<<PIN_TCK;
+				PORT |= 1<<TCK_PIN;
 				break;
 
 			case JTAG_PULSE_TCK_DELAY:
@@ -173,14 +174,14 @@ int main(void)
 				data2 = get_usb_byte();
 				if (data2 == 0xff) continue;
 				if (data) 
-					PORT |= (1<<PIN_TMS);
+					PORT |= (1<<TMS_PIN);
 				else
-					PORT &= ~(1<<PIN_TMS);
+					PORT &= ~(1<<TMS_PIN);
 				for (n = 0; n < data2; n++)
 				{
-					PORT &= ~(1<<PIN_TCK);
+					PORT &= ~(1<<TCK_PIN);
 					_delay_us(1);
-					PORT |= 1<<PIN_TCK;
+					PORT |= 1<<TCK_PIN;
 					_delay_us(1);
 				}
 				break;
@@ -195,23 +196,23 @@ int main(void)
 					v = get_usb_byte();
 					if (v == 0xff) break;
 					if (v&1) 
-						PORT |= (1<<PIN_TMS);
+						PORT |= (1<<TMS_PIN);
 					else
-						PORT &= ~(1<<PIN_TMS);
+						PORT &= ~(1<<TMS_PIN);
 					if (v&(1<<1))
 					{
 						if (v&(1<<2))
-							PORT |= (1<<PIN_TDI);
+							PORT |= (1<<TDI_PIN);
 						else
-							PORT &= ~(1<<PIN_TDI);
+							PORT &= ~(1<<TDI_PIN);
 					}
-					PORT &= ~(1<<PIN_TCK);
+					PORT &= ~(1<<TCK_PIN);
 					_delay_us(1);
-					PORT |= 1<<PIN_TCK;
+					PORT |= 1<<TCK_PIN;
 					_delay_us(1);
 					if (v&(1<<3))
 					{
-						if (((v >> 4)&1) != ((PORT_PIN >> PIN_TDO) & 1))
+						if (((v >> 4)&1) != ((PORT_PIN >> TDO_PIN) & 1))
 							ok = 0;
 					}
 				}
