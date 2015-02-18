@@ -162,11 +162,13 @@ int main(void)
 				CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (PORT_PIN >> TDO_PIN) & 1);
 				break;
 					
+/*
 			case JTAG_PULSE_SCK:
-				PORT &= ~(1<<TCK_PIN);
+				PORT &= ~(1<<SCK_PIN);
 				_delay_us(1);
-				PORT |= 1<<TCK_PIN;
+				PORT |= 1<<SCK_PIN;
 				break;
+*/
 
 			case JTAG_PULSE_TCK_DELAY:
 				data = get_usb_byte();
