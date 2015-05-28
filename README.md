@@ -1,7 +1,7 @@
 clujtag
 ===========
 
-Very simple JTAG programmer for AVR microcontrollers with hardware USB.
+Very simple JTAG programmer based on AVR microcontroller with hardware USB.
 
 You can use it to flash SVF or XSVF files via JTAG interface. 
 
