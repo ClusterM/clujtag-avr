@@ -1,3 +1,5 @@
+#define JTAG_TDO_REQUEST 0xFB
+
 #define JTAG_SETUP 0xFC
 
 #define JTAG_PULSE_TCK_DELAY 0xFD

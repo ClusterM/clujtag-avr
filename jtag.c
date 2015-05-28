@@ -159,7 +159,7 @@ int jtag_execute(uint8_t data)
 		{
 			jtag_setup();
 			ok = 1;
-			byte_counter = 0;				
+			byte_counter = 0;
 			return -1;
 		}
 	} else setup_counter = 0;
@@ -170,6 +170,11 @@ int jtag_execute(uint8_t data)
 		byte_counter = ACK_STEP;
 		LED_OFF;
 	} else
+	if (jtag_current_command == 0 && data == JTAG_TDO_REQUEST)
+	{
+		byte_counter = 0;		
+		return (PORT_PIN >> TDO_PIN) & 1;
+	} else 
 	if (ok && !jtag_parse_byte(data))
 	{
 		ok = 0;
