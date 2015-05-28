@@ -1,6 +1,6 @@
 #include "USBtoSerial.h"
-#include "clujtag.h"
 #include "defines.h"
+#include "jtag.h"
 #include "jtag_commands.h"
 
 /** LUFA CDC Class driver interface configuration and state information. This structure is
@@ -51,22 +51,9 @@ uint8_t get_usb_byte(void)
  *  setup of all components and the main program loop.
  */
 
-void jtag_shutdown(void)
-{
-	PORT &= ~((1<<TMS_PIN) | (1<<TCK_PIN) | (1<<TDO_PIN) | (1<<TDI_PIN));
-	PORT_DDR &= ~((1<<TMS_PIN) | (1<<TCK_PIN) | (1<<TDO_PIN) | (1<<TDI_PIN));
-}
-
-void jtag_setup(void)
-{
-	PORT &= ~((1<<TMS_PIN) | (1<<TCK_PIN) | (1<<TDO_PIN) | (1<<TDI_PIN));
-	PORT_DDR |= (1<<TMS_PIN) | (1<<TCK_PIN) | (1<<TDI_PIN);
-	PORT_DDR &= ~(1<<TDO_PIN);
-}
 
 int main(void)
 {
-	int initialized = 0;
 	jtag_shutdown();
 #ifdef LED_PIN
 #ifdef PORT_LED_DDR
@@ -81,149 +68,10 @@ int main(void)
 
 	for (;;)
 	{
-		uint8_t command = get_usb_byte();
-		uint8_t data, data2, ok, v, n;		
-#ifdef LED_PIN
-#ifdef PORT_LED
-		if (initialized)
-			PORT_LED ^= 1<<LED_PIN;
-#endif
-#endif
-	
-		switch (command)
-		{
-			case JTAG_SETUP:
-				jtag_setup();
-				initialized = 1;
-#ifdef LED_PIN
-#ifdef PORT_LED
-				PORT_LED |= 1<<LED_PIN;
-#endif
-#endif
-				break;
-
-			case JTAG_SHUTDOWN:
-				jtag_shutdown();
-				initialized = 0;
-#ifdef LED_PIN
-#ifdef PORT_LED
-				PORT_LED &= ~(1<<LED_PIN);
-#endif
-#endif
-				break;
-					
-			/*
-			case JTAG_SET_TMS:
-				data = get_usb_byte();
-				if (data == 0xff) continue;
-				if (data) 
-					PORT |= (1<<TMS_PIN);
-				else
-					PORT &= ~(1<<TMS_PIN);
-				break;
-
-			case JTAG_SET_TCK:
-				data = get_usb_byte();
-				if (data == 0xff) continue;
-				if (data) 
-					PORT |= (1<<TCK_PIN);
-				else
-					PORT &= ~(1<<TCK_PIN);
-				break;
-					
-			case JTAG_SET_TDI:
-				data = get_usb_byte();
-				if (data == 0xff) continue;
-				if (data)
-					PORT |= (1<<TDI_PIN);
-				else
-					PORT &= ~(1<<TDI_PIN);
-				break;
-					
-			case JTAG_GET_TDO:
-				CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (PORT_PIN >> TDO_PIN) & 1);	
-				break;
-			*/
-					
-			case JTAG_PULSE_TCK:
-				data = get_usb_byte();
-				if (data == 0xff) continue;
-				if (data&1) 
-					PORT |= (1<<TMS_PIN);
-				else
-					PORT &= ~(1<<TMS_PIN);
-				if (data&(1<<1))
-					PORT |= (1<<TDI_PIN);
-				else
-					PORT &= ~(1<<TDI_PIN);
-				PORT &= ~(1<<TCK_PIN);
-				_delay_us(1);
-				PORT |= 1<<TCK_PIN;
-				CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (PORT_PIN >> TDO_PIN) & 1);
-				break;
-					
-/*
-			case JTAG_PULSE_SCK:
-				PORT &= ~(1<<SCK_PIN);
-				_delay_us(1);
-				PORT |= 1<<SCK_PIN;
-				break;
-*/
-
-			case JTAG_PULSE_TCK_DELAY:
-				data = get_usb_byte();
-				if (data == 0xff) continue;
-				data2 = get_usb_byte();
-				if (data2 == 0xff) continue;
-				if (data) 
-					PORT |= (1<<TMS_PIN);
-				else
-					PORT &= ~(1<<TMS_PIN);
-				for (n = 0; n < data2; n++)
-				{
-					PORT &= ~(1<<TCK_PIN);
-					_delay_us(1);
-					PORT |= 1<<TCK_PIN;
-					_delay_us(1);
-				}
-				break;
-					
-			case JTAG_PULSE_TCK_MULTI:
-				data = get_usb_byte();
-				if (data == 0xff) continue;
-				ok = 1;
-				v = 0;
-				for (n = 0; n < data; n++)
-				{
-					v = get_usb_byte();
-					if (v == 0xff) break;
-					if (v&1) 
-						PORT |= (1<<TMS_PIN);
-					else
-						PORT &= ~(1<<TMS_PIN);
-					if (v&(1<<1))
-					{
-						if (v&(1<<2))
-							PORT |= (1<<TDI_PIN);
-						else
-							PORT &= ~(1<<TDI_PIN);
-					}
-					PORT &= ~(1<<TCK_PIN);
-					_delay_us(1);
-					PORT |= 1<<TCK_PIN;
-					_delay_us(1);
-					if (v&(1<<3))
-					{
-						if (((v >> 4)&1) != ((PORT_PIN >> TDO_PIN) & 1))
-							ok = 0;
-					}
-				}
-				if (v == 0xff) continue;
-				CDC_Device_SendByte(&VirtualSerial_CDC_Interface, ok);
-				break;
-		}		
-		
-	
+		uint8_t command = get_usb_byte();				
+		int res = jtag_execute(command);
+		if (res >= 0)	
+			CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)res);
 		CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
 		USB_USBTask();
 	}

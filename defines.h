@@ -6,3 +6,5 @@
 
 #define LED_PORT D
 #define LED_PIN 6
+
+#define ACK_STEP 1024

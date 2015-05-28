@@ -1,10 +1,11 @@
-#define JTAG_SETUP 1
-#define JTAG_SHUTDOWN 2
-//#define JTAG_SET_TMS 3
-//#define JTAG_SET_TCK 4
-//#define JTAG_GET_TDO 5
-//#define JTAG_SET_TDI 6
-#define JTAG_PULSE_TCK 7
-#define JTAG_PULSE_SCK 8
-#define JTAG_PULSE_TCK_DELAY 9
-#define JTAG_PULSE_TCK_MULTI 10
+#define JTAG_SETUP 0xFC
+
+#define JTAG_PULSE_TCK_DELAY 0xFD
+// Дальше 1 байт: 0бит - TMS, 1бит - нужно ли дёргать TCK, 2бит - жужна ли задержка. Если нужно дёргать TCK, потом 4 байта - сколько раз. Если нужна задержка - ещё 4 байта usec
+
+#define JTAG_PULSE_TCK_MULTI 0xFE
+// Дальше 1 байт: кол-во элементов. Каждый элемент это либо:
+	// число 1-127 означающее кол-во повторений и байт: 0бит - TMS, 1бит изменять ли TDI, 2бит значение TDI, 3бит - проверять ли TDO, 4бит значение TDO
+	// Либо 7бит равный единице и 1бит изменять ли TDI, 2бит значение TDI, 3бит - проверять ли TDI, 4бит значение TDO
+
+#define JTAG_SHUTDOWN 0xFF

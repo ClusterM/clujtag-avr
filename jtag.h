@@ -1,4 +1,4 @@
-#include <defines.h>
+#include "defines.h"
 
 #define CLUJTAG_CONCAT(a, b)            a ## b
 #define CLUJTAG_OUTPORT(name)           CLUJTAG_CONCAT(PORT, name)
@@ -11,12 +11,6 @@
 #define PORT_LED CLUJTAG_OUTPORT(LED_PORT)
 #define PORT_LED_DDR CLUJTAG_DDRPORT(LED_PORT)
 
-#ifdef LED_PIN
-#define LED_ON PORT_LED |= (1<<LED_PIN)
-#define LED_OFF PORT_LED &= ~(1<<LED_PIN)
-#define LED_BLINK PORT_LED ^= (1<<LED_PIN)
-#else
-#define LED_ON
-#define LED_OFF
-#define LED_BLINK
-#endif
+void jtag_setup(void);
+void jtag_shutdown(void);
+int jtag_execute(uint8_t data);
